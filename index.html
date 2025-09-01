@@ -3,202 +3,104 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Trading Engine Demo</title>
+    <title>Moses Achi — Senior Software Engineer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <meta name="description" content="Distributed AI Trading Engine — interactive demo (frontend simulation)" />
+    <meta name="description" content="Moses Achi — Senior Software Engineer | Cloud-native systems, AI trading, scalable platforms" />
+    <style>html { scroll-behavior: smooth; } body { background: linear-gradient(180deg,#0f172a 0%, #020617 100%); }</style>
   </head>
-  <body class="bg-slate-900 text-slate-100">
+  <body class="text-slate-200 antialiased">
     <div id="root"></div>
-
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-
-    function Header(){return (
-      <header className="p-4 border-b border-slate-700">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="text-xl font-semibold">Distributed AI Trading Engine — Demo</div>
-          <div className="text-sm text-slate-300">Simulated frontend — no real trading</div>
-        </div>
-      </header>
-    );}
-
-    function Stats({latency, accuracy, trades}){
-      return (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 bg-slate-800/40 rounded border border-slate-700">
-            <div className="text-sm text-sky-300">Execution Latency</div>
-            <div className="mt-2 font-semibold">{latency} ms</div>
-          </div>
-          <div className="p-4 bg-slate-800/40 rounded border border-slate-700">
-            <div className="text-sm text-sky-300">Prediction Accuracy</div>
-            <div className="mt-2 font-semibold">{accuracy}%</div>
-          </div>
-          <div className="p-4 bg-slate-800/40 rounded border border-slate-700">
-            <div className="text-sm text-sky-300">Trades Executed</div>
-            <div className="mt-2 font-semibold">{trades}</div>
-          </div>
-        </div>
-      );
-    }
-
-    function TradingChart(){ 
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-      const [labels,setLabels] = useState([]);
-      const [data,setData] = useState([]);
-      const [signals,setSignals] = useState([]);
-
-      useEffect(()=>{
-        const ctx = canvasRef.current.getContext('2d');
-        chartRef.current = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Price',
-              data: data,
-              borderWidth: 2,
-              tension: 0.25,
-              borderColor: '#60a5fa',
-              pointRadius: 0
-            }]
-          },
-          options: {
-            animation: false,
-            responsive: true,
-            scales: { x: { display: false }, y: { ticks: { color: '#cbd5e1' } } },
-            plugins: {
-              legend: { display: false },
-              tooltip: { mode: 'index', intersect: false }
-            }
-          }
-        });
-        return ()=> chartRef.current.destroy();
-      }, []);
-
-      // initialize
-      useEffect(()=>{
-        let init = [];
-        let labs = [];
-        let price = 100 + Math.random()*5;
-        for(let i=0;i<50;i++){ price += (Math.random()-0.5); init.push(parseFloat(price.toFixed(2))); labs.push(''); }
-        setData(init);
-        setLabels(labs);
-      }, []);
-
-      useEffect(()=>{
-        if(!chartRef.current) return;
-        chartRef.current.data.labels = labels;
-        chartRef.current.data.datasets[0].data = data;
-        chartRef.current.update('none');
-      }, [labels, data]);
-
-      // simulation loop
-      useEffect(()=>{
-        let trades = 0;
-        const interval = setInterval(()=>{
-          setData(prev=>{
-            let last = prev[prev.length-1] ?? 100;
-            const change = (Math.random()-0.48) * 0.8; // slight upward bias
-            let next = parseFloat((last + change).toFixed(2));
-            let nextArr = prev.slice(-200);
-            nextArr.push(next);
-            // signal generation (simple rule + randomness to simulate AI)
-            setSignals(s=>{
-              let newS = s.slice(-200);
-              const rand = Math.random();
-              const signal = rand > 0.98 ? 'SELL' : (rand < 0.02 ? 'BUY' : null);
-              newS.push(signal);
-              if(signal) trades++;
-              return newS;
-            });
-            return nextArr;
-          });
-          setLabels(prev=>{
-            let newL = prev.slice(-200);
-            newL.push('');
-            return newL;
-          });
-        }, 500);
-        return ()=> clearInterval(interval);
-      }, []);
-
-      // render buy/sell markers overlay
-      useEffect(()=>{
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        function drawMarkers(){
-          const chart = chartRef.current;
-          if(!chart) return;
-          const signalsLocal = signals;
-          const dataset = chart.data.datasets[0].data;
-          // clear overlay by updating chart (Chart.js handles rendering)
-          // we draw markers after chart draw
-        }
-        const obs = new MutationObserver(()=> drawMarkers());
-        obs.observe(chartRef.current.canvas, { attributes: true, childList: true, subtree: true });
-        return ()=> obs.disconnect();
-      }, [signals]);
-
-      return (
-        <div className="bg-slate-800/30 p-4 rounded border border-slate-700">
-          <canvas ref={canvasRef} height="180"></canvas>
-          <div className="mt-2 flex gap-2 flex-wrap text-sm">
-            {signals.slice(-100).map((s,i)=> s ? <span key={i} className={`px-2 py-1 rounded text-xs ${s==='BUY'?'bg-green-700 text-green-100':'bg-red-800 text-red-100'}`}>{s}</span> : null)}
-          </div>
-        </div>
-      );
-    }
-
-    function App(){
-      const [latency,setLatency] = useState(35);
-      const [accuracy,setAccuracy] = useState(78);
-      const [trades,setTrades] = useState(0);
-
-      // simulate stat updates
-      useEffect(()=>{
-        const iv = setInterval(()=>{
-          setLatency(Math.max(20, Math.round(30 + Math.random()*30)));
-          setAccuracy(Math.min(99, Math.round(70 + Math.random()*20)));
-          setTrades(t=> t + Math.floor(Math.random()*3));
-        }, 3500);
-        return ()=> clearInterval(iv);
-      }, []);
-
-      return (
-        <div>
-          <Header />
-          <main className="max-w-5xl mx-auto p-6 space-y-6">
-            <section>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="md:col-span-2">
-                  <TradingChart />
-                </div>
-                <div className="space-y-4">
-                  <Stats latency={latency} accuracy={accuracy} trades={trades} />
-                  <div className="p-4 bg-slate-800/30 rounded border border-slate-700">
-                    <div className="font-semibold">Model Summary</div>
-                    <div className="text-sm text-slate-300 mt-2">Frontend simulation: shows price series, buy/sell markers and metrics. The original system uses TensorFlow & Kafka in production.</div>
-                    <div className="mt-3 text-xs text-slate-400">Note: This is a demo UI. No real trading occurs.</div>
-                  </div>
-                </div>
+      function Nav() {
+        const links = [
+          {name: 'About', href: '#about'},
+          {name: 'Skills', href: '#skills'},
+          {name: 'Experience', href: '#experience'},
+          {name: 'Projects', href: '#projects'},
+          {name: 'Education', href: '#education'},
+          {name: 'Contact', href: '#contact'}
+        ];
+        return (
+          <header className="fixed w-full z-30 top-0 bg-transparent">
+            <nav className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+              <div className="text-xl font-semibold text-white">Moses Achi</div>
+              <div className="hidden md:flex gap-6 text-slate-300">
+                {links.map(l => (
+                  <a key={l.href} href={l.href} className="hover:text-white">{l.name}</a>
+                ))}
+                <a href="Moses_Achi_CV.pdf" target="_blank" className="bg-sky-500 text-slate-900 px-3 py-1 rounded font-medium">Download Resume</a>
               </div>
-            </section>
-            <section className="text-center text-sm text-slate-400">
-              <div>Source code available in the repository. Demo hosted on GitHub Pages.</div>
-            </section>
-          </main>
-        </div>
-      );
-    }
+            </nav>
+          </header>
+        );
+      }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+      function ProjectCard({title, desc, tech, link}){
+        return (
+          <div className="bg-slate-800/30 p-5 rounded border border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-white">{title}</div>
+              {link && <a href={link} target="_blank" rel="noreferrer" className="text-sm underline">View</a>}
+            </div>
+            <div className="text-slate-200 text-sm mt-3">{desc}</div>
+            <div className="text-xs text-slate-300 mt-3">{tech}</div>
+          </div>
+        )
+      }
+
+      function Projects(){
+        const projects = [
+          {
+            title: 'Distributed AI Trading Engine',
+            desc: 'High-frequency trading engine demo with real-time charts and simulated AI buy/sell signals.',
+            tech: 'React • Chart.js • Tailwind',
+            link: 'https://mosesachizz.github.io/trading-engine-demo'
+          },
+          {
+            title: 'Cloud-Native E-Learning SaaS',
+            desc: 'Demo e-learning platform with student and instructor dashboards.',
+            tech: 'React • Tailwind',
+            link: 'https://mosesachizz.github.io/elearning-saas-demo'
+          }
+        ];
+        return (
+          <section id="projects" className="max-w-5xl mx-auto px-6 py-16">
+            <h2 className="text-2xl font-semibold text-white">Key Projects</h2>
+            <div className="mt-6 grid md:grid-cols-2 gap-4">
+              {projects.map((p,i)=>(<ProjectCard key={i} {...p} />))}
+            </div>
+          </section>
+        )
+      }
+
+      function Footer(){ return (
+        <footer id="contact" className="border-t border-slate-700 mt-10 py-8">
+          <div className="max-w-5xl mx-auto px-6 text-slate-400">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div><div className="font-semibold text-white">Contact</div><div className="text-sm">mosesachi.me@gmail.com</div></div>
+              <div className="text-sm">GitHub: <a href="https://github.com/mosesachizz" target="_blank" rel="noreferrer" className="underline">mosesachizz</a> • LinkedIn: <a href="https://linkedin.com/in/mosesachi" target="_blank" rel="noreferrer" className="underline">mosesachi</a></div>
+            </div>
+            <div className="mt-4 text-xs text-slate-500">© {new Date().getFullYear()} Moses Achi — Built with React + Tailwind. Live on GitHub Pages.</div>
+          </div>
+        </footer>
+      )}
+
+      function App(){
+        return (
+          <div className="min-h-screen text-slate-100">
+            <Nav />
+            <main className="pt-20">
+              <Projects />
+              <Footer />
+            </main>
+          </div>
+        )
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
   </body>
 </html>
